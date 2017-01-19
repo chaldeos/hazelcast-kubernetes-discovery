@@ -1,3 +1,7 @@
+= !!! NOT THE OFFICIAL REPOSITORY ANYMORE !!!
+
+See: link:https://github.com/hazelcast/hazelcast-kubernetes-discovery[https://github.com/hazelcast/hazelcast-kubernetes-discovery]
+
 = Hazelcast Discovery Plugin for Kubernetes
 Christoph Engelbert <https://github.com/noctarius[@noctarius2k]>
 // Settings:
