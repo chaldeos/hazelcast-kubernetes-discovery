@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.kubernetes.KubernetesProperties.KUBERNETES_API_TOKEN;
+import static com.hazelcast.kubernetes.KubernetesProperties.KUBERNETES_FAIL_REGION_PROP_NAME;
+import static com.hazelcast.kubernetes.KubernetesProperties.KUBERNETES_FAIL_ZONE_PROP_NAME;
 import static com.hazelcast.kubernetes.KubernetesProperties.KUBERNETES_MASTER_URL;
 import static com.hazelcast.kubernetes.KubernetesProperties.KUBERNETES_SYSTEM_PREFIX;
 import static com.hazelcast.kubernetes.KubernetesProperties.NAMESPACE;
@@ -43,6 +45,8 @@ final class HazelcastKubernetesDiscoveryStrategy
 
     private static final String DEFAULT_MASTER_URL = "https://kubernetes.default.svc";
     private static final String HAZELCAST_SERVICE_PORT = "hazelcast-service-port";
+    private static final String FAILURE_REGION_DEFAULT = "failure-domain.beta.kubernetes.io/region";
+    private static final String FAILURE_ZONE_DEFAULT = "failure-domain.beta.kubernetes.io/zone";
     private static final int DEFAULT_SERVICE_DNS_TIMEOUT_SECONDS = 5;
 
     private final EndpointResolver endpointResolver;
@@ -59,6 +63,10 @@ final class HazelcastKubernetesDiscoveryStrategy
         String apiToken = getOrDefault(properties, KUBERNETES_SYSTEM_PREFIX, KUBERNETES_API_TOKEN, null);
         String namespace = getOrDefault(properties, KUBERNETES_SYSTEM_PREFIX, NAMESPACE, getNamespaceOrDefault());
         String kubernetesMaster = getOrDefault(properties, KUBERNETES_SYSTEM_PREFIX, KUBERNETES_MASTER_URL, DEFAULT_MASTER_URL);
+        String failureRegion = getOrDefault(KUBERNETES_SYSTEM_PREFIX, KUBERNETES_FAIL_REGION_PROP_NAME, FAILURE_REGION_DEFAULT);
+        String failureZone = getOrDefault(KUBERNETES_SYSTEM_PREFIX, KUBERNETES_FAIL_ZONE_PROP_NAME, FAILURE_ZONE_DEFAULT);
+
+        String availabilityZone = failureRegion + "/" + failureZone;
 
         logger.info("Kubernetes Discovery properties: { "
                 + "service-dns: " + serviceDns + ", "
@@ -73,7 +81,7 @@ final class HazelcastKubernetesDiscoveryStrategy
             endpointResolver = new DnsEndpointResolver(logger, serviceDns, serviceDnsTimeout);
         } else {
             endpointResolver = new ServiceEndpointResolver(logger, serviceName, serviceLabel, serviceLabelValue, namespace,
-                    kubernetesMaster, apiToken);
+                    kubernetesMaster, apiToken, availabilityZone);
         }
         logger.info("Kubernetes Discovery activated resolver: " + endpointResolver.getClass().getSimpleName());
         this.endpointResolver = endpointResolver;
@@ -92,6 +100,11 @@ final class HazelcastKubernetesDiscoveryStrategy
 
     public void start() {
         endpointResolver.start();
+    }
+
+    @Override
+    public Map<String, Object> discoverLocalMetadata() {
+        return endpointResolver.discoverLocalMetadata();
     }
 
     public Iterable<DiscoveryNode> discoverNodes() {
@@ -164,6 +177,8 @@ final class HazelcastKubernetesDiscoveryStrategy
         }
 
         abstract List<DiscoveryNode> resolve();
+
+        abstract Map<String, Object> discoverLocalMetadata();
 
         void start() {
         }

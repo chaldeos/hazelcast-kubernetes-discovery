@@ -181,7 +181,7 @@
               com.hazelcast.spi.discovery,com.hazelcast.core,
               com.hazelcast.logging,com.hazelcast.nio, com.hazelcast.util,
               io.fabric8.kubernetes.api.model,io.fabric8.kubernetes.client.*,
-              org.xbill.DNS,io.fabric8.openshift.client
+              org.xbill.DNS,io.fabric8.openshift.client,com.hazelcast.spi.partitiongroup
             </Import-Package>
           </instructions>
         </configuration>

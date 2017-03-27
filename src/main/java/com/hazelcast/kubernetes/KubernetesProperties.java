@@ -97,6 +97,15 @@ public final class KubernetesProperties {
      */
     public static final PropertyDefinition KUBERNETES_API_TOKEN = property("api-token", STRING);
 
+    /**
+     *
+     */
+    public static final PropertyDefinition KUBERNETES_FAIL_REGION_PROP_NAME = property("failure-region", STRING);
+    /**
+     *
+     */
+    public static final PropertyDefinition KUBERNETES_FAIL_ZONE_PROP_NAME = property("failure-zone", STRING);
+
     // Prevent instantiation
     private KubernetesProperties() {
     }

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class DnsEndpointResolver
@@ -98,6 +99,12 @@ final class DnsEndpointResolver
         } catch (UnknownHostException e) {
             throw new RuntimeException("Could not resolve services via DNS", e);
         }
+    }
+
+    @Override
+    Map<String, Object> discoverLocalMetadata() {
+        // TODO Stupid DNS :D
+        return Collections.emptyMap();
     }
 
     private Lookup buildLookup()

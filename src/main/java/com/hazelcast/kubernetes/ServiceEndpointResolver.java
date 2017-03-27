@@ -21,6 +21,7 @@ import com.hazelcast.nio.Address;
 import com.hazelcast.nio.IOUtil;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
+import com.hazelcast.spi.partitiongroup.PartitionGroupMetaData;
 import com.hazelcast.util.StringUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.fabric8.kubernetes.api.model.EndpointAddress;
@@ -48,12 +49,13 @@ class ServiceEndpointResolver
     private final String serviceName;
     private final String serviceLabel;
     private final String serviceLabelValue;
+    private final String availabilityZone;
     private final String namespace;
 
     private final KubernetesClient client;
 
-    ServiceEndpointResolver(ILogger logger, String serviceName, String serviceLabel, String serviceLabelValue,
-                                   String namespace, String kubernetesMaster, String apiToken) {
+    ServiceEndpointResolver(ILogger logger, String serviceName, String serviceLabel, String serviceLabelValue, String namespace,
+                            String kubernetesMaster, String apiToken, String availabilityZone) {
 
         super(logger);
 
@@ -61,6 +63,7 @@ class ServiceEndpointResolver
         this.namespace = namespace;
         this.serviceLabel = serviceLabel;
         this.serviceLabelValue = serviceLabelValue;
+        this.availabilityZone = availabilityZone;
         this.client = buildKubernetesClient(apiToken, kubernetesMaster);
     }
 
@@ -86,6 +89,18 @@ class ServiceEndpointResolver
         }
 
         return result.isEmpty() ? getNodesByNamespace() : result;
+    }
+
+    @Override
+    Map<String, Object> discoverLocalMetadata() {
+        String hostname = findHostname();
+        String nodename = client.pods().inNamespace(namespace).withName(hostname).get().getSpec().getNodeName();
+        String zone =  client.nodes().withName(nodename).get().getMetadata().getLabels().get(availabilityZone);
+        return Collections.<String, Object>singletonMap(PartitionGroupMetaData.PARTITION_GROUP_ZONE, zone);
+    }
+
+    private String findHostname() {
+        return System.getenv("HOSTNAME");
     }
 
     private List<DiscoveryNode> getNodesByNamespace() {
